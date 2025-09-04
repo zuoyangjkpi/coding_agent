@@ -10,7 +10,9 @@ class AIService:
     def __init__(self):
         self.openai_client = OpenAI()
         self.deepseek_base_url = "https://api.deepseek.com/v1"
-        self.gemini_base_url = "https://generativelanguage.googleapis.com/v1beta"
+        self.anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
+        self.google_api_key = os.getenv('GOOGLE_API_KEY')
+        self.deepseek_api_key = os.getenv('DEEPSEEK_API_KEY')
         
     def get_available_models(self) -> List[Dict[str, Any]]:
         """获取可用的AI模型列表"""
@@ -220,9 +222,13 @@ class AIService:
         return f"Gemini {model} response for: {prompt[:100]}..."
     
     def _call_claude(self, prompt: str, model: str) -> str:
-        """调用Claude模型"""
-        # 这里需要配置Claude API
-        # 暂时返回模拟响应
+        """调用Claude模型 (Anthropic API)"""
+        # 需要安装: pip install anthropic
+        # 需要配置: ANTHROPIC_API_KEY环境变量
+        if not self.anthropic_api_key:
+            return f"Claude API未配置，请设置ANTHROPIC_API_KEY环境变量"
+        
+        # 暂时返回模拟响应，实际部署时需要集成Anthropic API
         return f"Claude {model} response for: {prompt[:100]}..."
     
     def _call_openai(self, prompt: str, model: str) -> str:
