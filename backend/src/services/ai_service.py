@@ -2,7 +2,13 @@ import os
 import json
 import requests
 from openai import OpenAI
+import anthropic
+import google.generativeai as genai
 from typing import Dict, List, Optional, Any
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
 
 class AIService:
     """AI服务管理类，支持多种AI模型"""
@@ -13,6 +19,25 @@ class AIService:
         self.anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
         self.google_api_key = os.getenv('GOOGLE_API_KEY')
         self.deepseek_api_key = os.getenv('DEEPSEEK_API_KEY')
+        
+        # 初始化Anthropic客户端
+        if self.anthropic_api_key:
+            self.anthropic_client = anthropic.Anthropic(api_key=self.anthropic_api_key)
+        else:
+            self.anthropic_client = None
+            
+        # 初始化Google AI客户端
+        if self.google_api_key:
+            genai.configure(api_key=self.google_api_key)
+        
+        # 初始化DeepSeek客户端
+        if self.deepseek_api_key:
+            self.deepseek_client = OpenAI(
+                api_key=self.deepseek_api_key,
+                base_url=self.deepseek_base_url
+            )
+        else:
+            self.deepseek_client = None
         
     def get_available_models(self) -> List[Dict[str, Any]]:
         """获取可用的AI模型列表"""
@@ -199,37 +224,75 @@ class AIService:
     
     def _call_deepseek(self, prompt: str) -> str:
         """调用DeepSeek模型"""
-        # 由于DeepSeek R1是开源模型，这里使用OpenAI兼容的API
-        # 实际部署时需要配置DeepSeek的API端点
         try:
-            response = self.openai_client.chat.completions.create(
-                model="gpt-4o-mini",  # 暂时使用GPT-4o-mini作为替代
-                messages=[
-                    {"role": "system", "content": "You are a helpful coding assistant with expertise in code analysis and generation."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=4000,
-                temperature=0.1
-            )
-            return response.choices[0].message.content
+            if self.deepseek_client:
+                response = self.deepseek_client.chat.completions.create(
+                    model="deepseek-r1",
+                    messages=[
+                        {"role": "system", "content": "You are a helpful coding assistant with expertise in code analysis and generation."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=4000,
+                    temperature=0.1
+                )
+                return response.choices[0].message.content
+            else:
+                # 如果没有DeepSeek API密钥，使用OpenAI作为备选
+                response = self.openai_client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "You are a helpful coding assistant with expertise in code analysis and generation."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=4000,
+                    temperature=0.1
+                )
+                return response.choices[0].message.content
         except Exception as e:
             raise Exception(f"DeepSeek API error: {str(e)}")
     
     def _call_gemini(self, prompt: str, model: str) -> str:
-        """调用Gemini模型"""
-        # 这里需要配置Gemini API
-        # 暂时返回模拟响应
-        return f"Gemini {model} response for: {prompt[:100]}..."
+        """调用Gemini模型 (Google AI API)"""
+        try:
+            if not self.google_api_key:
+                return f"Gemini API未配置，请设置GOOGLE_API_KEY环境变量"
+            
+            # 根据模型名称选择对应的Gemini模型
+            model_name = "gemini-2.0-flash-exp" if "2.5" in model else "gemini-1.5-flash"
+            
+            model_instance = genai.GenerativeModel(model_name)
+            response = model_instance.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    max_output_tokens=4000,
+                    temperature=0.1,
+                )
+            )
+            return response.text
+        except Exception as e:
+            return f"Gemini API error: {str(e)}"
     
     def _call_claude(self, prompt: str, model: str) -> str:
         """调用Claude模型 (Anthropic API)"""
-        # 需要安装: pip install anthropic
-        # 需要配置: ANTHROPIC_API_KEY环境变量
-        if not self.anthropic_api_key:
-            return f"Claude API未配置，请设置ANTHROPIC_API_KEY环境变量"
-        
-        # 暂时返回模拟响应，实际部署时需要集成Anthropic API
-        return f"Claude {model} response for: {prompt[:100]}..."
+        try:
+            if not self.anthropic_client:
+                return f"Claude API未配置，请设置ANTHROPIC_API_KEY环境变量"
+            
+            # 根据模型名称选择对应的Claude模型
+            claude_model = "claude-3-5-sonnet-20241022" if "3.5" in model else "claude-3-haiku-20240307"
+            
+            response = self.anthropic_client.messages.create(
+                model=claude_model,
+                max_tokens=4000,
+                temperature=0.1,
+                system="You are a helpful coding assistant with expertise in code analysis and generation.",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return response.content[0].text
+        except Exception as e:
+            return f"Claude API error: {str(e)}"
     
     def _call_openai(self, prompt: str, model: str) -> str:
         """调用OpenAI模型"""
