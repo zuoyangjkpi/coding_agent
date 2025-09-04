@@ -69,10 +69,16 @@ pip install -r requirements.txt
 
 3. 配置环境变量
 ```bash
-export GITHUB_TOKEN="your_github_token"
+# OpenAI API (用于GPT模型)
 export OPENAI_API_KEY="your_openai_api_key"
+# Anthropic API (用于Claude模型)
+export ANTHROPIC_API_KEY="your_anthropic_api_key"
+# Google AI API (用于Gemini模型)
 export GOOGLE_API_KEY="your_google_api_key"
+# DeepSeek API (用于DeepSeek R1模型)
 export DEEPSEEK_API_KEY="your_deepseek_api_key"
+# GitHub Token (用于仓库操作)
+export GITHUB_TOKEN="your_github_token"
 ```
 
 4. 启动后端服务
