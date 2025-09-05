@@ -29,32 +29,35 @@ function App() {
   const [connectionStatus, setConnectionStatus] = useState('disconnected')
 
   useEffect(() => {
-    // // 设置axios默认配置
-    // axios.defaults.baseURL = window.location.origin
-
-    // // 初始化Socket.IO连接
-    // const socketInstance = io(window.location.origin)
-    // setSocket(socketInstance)
-    
+    // 获取后端URL，优先使用环境变量，否则使用当前域名
     const backendURL = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+    console.log('Backend URL:', backendURL); // 调试输出
 
     // 设置axios默认配置为后端地址
     axios.defaults.baseURL = backendURL;
 
     // 初始化Socket.IO连接指向后端
     const socketInstance = io(backendURL, {
-      path: '/socket.io'            // 可选：明确指定后端的 socket.io 路径
+      path: '/socket.io',            // 明确指定后端的 socket.io 路径
+      transports: ['websocket', 'polling'], // 支持多种传输方式
+      timeout: 20000,                // 连接超时时间
+      forceNew: true                 // 强制创建新连接
     });
     setSocket(socketInstance);
 
     socketInstance.on('connect', () => {
       setConnectionStatus('connected')
-      console.log('Connected to server')
+      console.log('Connected to server:', socketInstance.id)
     })
 
-    socketInstance.on('disconnect', () => {
+    socketInstance.on('disconnect', (reason) => {
       setConnectionStatus('disconnected')
-      console.log('Disconnected from server')
+      console.log('Disconnected from server:', reason)
+    })
+
+    socketInstance.on('connect_error', (error) => {
+      setConnectionStatus('disconnected')
+      console.error('Connection error:', error)
     })
 
     socketInstance.on('analysis_update', (data) => {
