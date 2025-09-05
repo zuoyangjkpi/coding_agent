@@ -1,3 +1,6 @@
+from gevent import monkey
+monkey.patch_all()
+# 以上两行代码必须放在文件的最前面，以确保正确的协作式多任务处理
 import os
 import sys
 import logging
@@ -30,7 +33,7 @@ cors_origins = os.getenv('CORS_ORIGINS', '*')
 CORS(app, origins=cors_origins)
 
 # 初始化SocketIO
-socketio = SocketIO(app, cors_allowed_origins=cors_origins)
+socketio = SocketIO(app, cors_allowed_origins=cors_origins, async_mode='gevent')
 
 # 注册蓝图
 app.register_blueprint(user_bp, url_prefix='/api')

@@ -19,6 +19,7 @@ import CodeEditor from './components/CodeEditor'
 import axios from 'axios'
 import io from 'socket.io-client'
 import './App.css'
+import.meta.env.VITE_BACKEND_URL // 可以获取到.env 中定义的地址
 
 function App() {
   const [currentView, setCurrentView] = useState('projects')
@@ -28,12 +29,23 @@ function App() {
   const [connectionStatus, setConnectionStatus] = useState('disconnected')
 
   useEffect(() => {
-    // 设置axios默认配置
-    axios.defaults.baseURL = window.location.origin
+    // // 设置axios默认配置
+    // axios.defaults.baseURL = window.location.origin
 
-    // 初始化Socket.IO连接
-    const socketInstance = io(window.location.origin)
-    setSocket(socketInstance)
+    // // 初始化Socket.IO连接
+    // const socketInstance = io(window.location.origin)
+    // setSocket(socketInstance)
+    
+    const backendURL = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+
+    // 设置axios默认配置为后端地址
+    axios.defaults.baseURL = backendURL;
+
+    // 初始化Socket.IO连接指向后端
+    const socketInstance = io(backendURL, {
+      path: '/socket.io'            // 可选：明确指定后端的 socket.io 路径
+    });
+    setSocket(socketInstance);
 
     socketInstance.on('connect', () => {
       setConnectionStatus('connected')

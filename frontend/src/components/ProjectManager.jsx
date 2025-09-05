@@ -66,6 +66,22 @@ const ProjectManager = ({ onProjectSelect }) => {
     )
   }
 
+  const handleDelete = async (projectId, e) => {
+  // 阻止事件冒泡，避免触发项目选择
+  if (e && e.stopPropagation) {
+    e.stopPropagation();
+  }
+  try {
+    console.log('尝试删除项目', projectId);  // 调试输出
+    await axios.delete(`/api/projects/${projectId}`);
+    // 更新本地状态，移除被删除的项目
+    setProjects((prev) => prev.filter((p) => p.id !== projectId));
+    console.log('删除成功', projectId);  // 调试输出
+  } catch (error) {
+    console.error('删除项目失败:', error);
+  }
+ }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -152,44 +168,51 @@ const ProjectManager = ({ onProjectSelect }) => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
-            <Card 
-              key={project.id} 
-              className="hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => onProjectSelect(project)}
-            >
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{project.name}</CardTitle>
-                  {getStatusBadge(project.status)}
-                </div>
-                <CardDescription className="line-clamp-2">
-                  {project.description || '暂无描述'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {project.github_url && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Github className="w-4 h-4 mr-2" />
-                      <span className="truncate">{project.github_url}</span>
-                    </div>
-                  )}
+          <Card
+            key={project.id}
+            className="hover:shadow-lg transition-shadow cursor-pointer"
+            onClick={() => onProjectSelect(project)}
+          >
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <CardTitle className="text-lg">{project.name}</CardTitle>
+                {getStatusBadge(project.status)}
+              </div>
+              <CardDescription className="line-clamp-2">
+                {project.description || '暂无描述'}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent>
+              <div className="space-y-2">
+                {project.github_url && (
                   <div className="flex items-center text-sm text-gray-600">
-                    <Clock className="w-4 h-4 mr-2" />
-                    <span>
-                      创建于 {new Date(project.created_at).toLocaleDateString()}
-                    </span>
+                    <Github className="w-4 h-4 mr-2" />
+                    <span className="truncate">{project.github_url}</span>
                   </div>
-                  {project.status === 'error' && (
-                    <div className="flex items-center text-sm text-red-600">
-                      <AlertCircle className="w-4 h-4 mr-2" />
-                      <span>项目状态异常</span>
-                    </div>
-                  )}
+                )}
+                <div className="flex items-center text-sm text-gray-600">
+                  <Clock className="w-4 h-4 mr-2" />
+                  <span>创建于 {new Date(project.created_at).toLocaleDateString()}</span>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+                {project.status === 'error' && (
+                  <div className="flex items-center text-sm text-red-600">
+                    <AlertCircle className="w-4 h-4 mr-2" />
+                    <span>项目状态异常</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <div className="flex justify-end px-4 pb-4">
+              <Button
+                variant="destructive"
+                onClick={(e) => handleDelete(project.id, e)}
+              >
+                删除
+              </Button>
+            </div>
+          </Card>
+        ))}
         </div>
       )}
     </div>
