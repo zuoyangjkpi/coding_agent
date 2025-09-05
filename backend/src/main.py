@@ -29,11 +29,11 @@ app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'sta
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'asdf#FGSgvasgf$5$WGT')
 
 # 启用CORS支持
-cors_origins = os.getenv('CORS_ORIGINS', '*')
-CORS(app, origins=cors_origins)
+cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000')
+CORS(app, origins=cors_origins.split(','), supports_credentials=True)
 
 # 初始化SocketIO
-socketio = SocketIO(app, cors_allowed_origins=cors_origins, async_mode='gevent')
+socketio = SocketIO(app, cors_allowed_origins=cors_origins.split(','), async_mode='gevent')
 
 # 注册蓝图
 app.register_blueprint(user_bp, url_prefix='/api')

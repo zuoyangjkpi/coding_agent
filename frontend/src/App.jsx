@@ -29,19 +29,30 @@ function App() {
   const [connectionStatus, setConnectionStatus] = useState('disconnected')
 
   useEffect(() => {
-    // 获取后端URL，优先使用环境变量，否则使用当前域名
-    const backendURL = import.meta.env.VITE_BACKEND_URL || window.location.origin;
-    console.log('Backend URL:', backendURL); // 调试输出
+    // 在开发环境中，使用Vite代理，所以直接使用相对路径
+    // 在生产环境中，使用环境变量指定的后端URL
+    const isDevelopment = import.meta.env.DEV;
+    const backendURL = isDevelopment ? window.location.origin : (import.meta.env.VITE_BACKEND_URL || window.location.origin);
+    
+    console.log('Environment:', isDevelopment ? 'development' : 'production');
+    console.log('Backend URL:', backendURL);
 
-    // 设置axios默认配置为后端地址
-    axios.defaults.baseURL = backendURL;
+    // 设置axios默认配置
+    if (isDevelopment) {
+      // 开发环境使用代理，所以baseURL设为空或当前域名
+      axios.defaults.baseURL = '';
+    } else {
+      // 生产环境直接指向后端
+      axios.defaults.baseURL = backendURL;
+    }
 
-    // 初始化Socket.IO连接指向后端
+    // 初始化Socket.IO连接
     const socketInstance = io(backendURL, {
-      path: '/socket.io',            // 明确指定后端的 socket.io 路径
-      transports: ['websocket', 'polling'], // 支持多种传输方式
-      timeout: 20000,                // 连接超时时间
-      forceNew: true                 // 强制创建新连接
+      path: '/socket.io',
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+      forceNew: true,
+      autoConnect: true
     });
     setSocket(socketInstance);
 
