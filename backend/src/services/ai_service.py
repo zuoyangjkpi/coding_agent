@@ -310,10 +310,6 @@ class AIService:
         except Exception as e:
             raise Exception(f"OpenAI API error: {str(e)}")
 
-# 全局AI服务实例
-ai_service = AIService()
-
-
     def analyze_project(self, project_overview: dict, important_files: list, analysis_type: str = 'overview', model: str = 'deepseek-r1') -> dict:
         """分析整个项目"""
         try:
@@ -438,4 +434,7 @@ ai_service = AIService()
                 'analysis_type': analysis_type,
                 'model_used': model
             }
+
+# 全局AI服务实例
+ai_service = AIService()
 
