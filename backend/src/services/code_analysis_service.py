@@ -332,16 +332,155 @@ class CodeAnalysisService:
             '.js': 'javascript',
             '.ts': 'typescript',
             '.jsx': 'javascript',
-            '.tsx': 'typescript'
+            '.tsx': 'typescript',
+            '.java': 'java',
+            '.cpp': 'cpp',
+            '.cc': 'cpp',
+            '.cxx': 'cpp',
+            '.c': 'c',
+            '.h': 'c',
+            '.hpp': 'cpp',
+            '.cs': 'csharp',
+            '.php': 'php',
+            '.rb': 'ruby',
+            '.go': 'go',
+            '.rs': 'rust',
+            '.swift': 'swift',
+            '.kt': 'kotlin',
+            '.scala': 'scala',
+            '.html': 'html',
+            '.htm': 'html',
+            '.css': 'css',
+            '.scss': 'scss',
+            '.sass': 'sass',
+            '.less': 'less',
+            '.sql': 'sql',
+            '.sh': 'shell',
+            '.bash': 'shell',
+            '.zsh': 'shell',
+            '.fish': 'shell',
+            '.json': 'json',
+            '.xml': 'xml',
+            '.yaml': 'yaml',
+            '.yml': 'yaml',
+            '.toml': 'toml',
+            '.ini': 'ini',
+            '.cfg': 'ini',
+            '.conf': 'ini',
+            '.md': 'markdown',
+            '.markdown': 'markdown',
+            '.txt': 'text',
+            '.log': 'text'
         }
         return language_map.get(file_ext)
+    
+    def detect_language_from_content(self, content: str, filename: str = None) -> str:
+        """基于内容检测编程语言"""
+        # 首先尝试基于文件扩展名检测
+        if filename:
+            file_ext = os.path.splitext(filename)[1].lower()
+            lang_from_ext = self._detect_language(file_ext)
+            if lang_from_ext:
+                return lang_from_ext
+        
+        # 基于内容的语言检测
+        content_lower = content.lower().strip()
+        
+        # Python特征
+        if any(keyword in content for keyword in ['def ', 'import ', 'from ', 'class ', '__init__', 'elif ', 'print(']):
+            return 'python'
+        
+        # JavaScript/TypeScript特征
+        if any(keyword in content for keyword in ['function ', 'var ', 'let ', 'const ', 'console.log', '=>', 'require(', 'import {']):
+            if 'interface ' in content or 'type ' in content or ': string' in content or ': number' in content:
+                return 'typescript'
+            return 'javascript'
+        
+        # Java特征
+        if any(keyword in content for keyword in ['public class', 'private ', 'public static void main', 'System.out.println']):
+            return 'java'
+        
+        # C/C++特征
+        if any(keyword in content for keyword in ['#include', 'int main(', 'printf(', 'cout <<', 'std::']):
+            if any(cpp_keyword in content for cpp_keyword in ['std::', 'cout', 'cin', 'namespace', 'class ']):
+                return 'cpp'
+            return 'c'
+        
+        # C#特征
+        if any(keyword in content for keyword in ['using System', 'namespace ', 'Console.WriteLine', 'public class']):
+            return 'csharp'
+        
+        # PHP特征
+        if content.startswith('<?php') or '<?php' in content:
+            return 'php'
+        
+        # Ruby特征
+        if any(keyword in content for keyword in ['def ', 'end', 'puts ', 'require ', 'class ', '@']):
+            return 'ruby'
+        
+        # Go特征
+        if any(keyword in content for keyword in ['package ', 'func ', 'import (', 'fmt.Print']):
+            return 'go'
+        
+        # Rust特征
+        if any(keyword in content for keyword in ['fn ', 'let mut', 'println!', 'use std::']):
+            return 'rust'
+        
+        # HTML特征
+        if content_lower.startswith('<!doctype html') or '<html' in content_lower or '<body' in content_lower:
+            return 'html'
+        
+        # CSS特征
+        if '{' in content and '}' in content and ':' in content and ';' in content:
+            if not any(keyword in content for keyword in ['function', 'var ', 'let ', 'const ']):
+                return 'css'
+        
+        # JSON特征
+        if content.strip().startswith('{') and content.strip().endswith('}'):
+            try:
+                import json
+                json.loads(content)
+                return 'json'
+            except:
+                pass
+        
+        # XML特征
+        if content.strip().startswith('<?xml') or (content.strip().startswith('<') and content.strip().endswith('>')):
+            return 'xml'
+        
+        # YAML特征
+        if ':' in content and not '{' in content and not ';' in content:
+            lines = content.split('\n')
+            yaml_pattern = 0
+            for line in lines:
+                if line.strip() and ':' in line and not line.strip().startswith('#'):
+                    yaml_pattern += 1
+            if yaml_pattern > len(lines) * 0.3:  # 如果30%以上的行符合YAML模式
+                return 'yaml'
+        
+        # Shell脚本特征
+        if content.startswith('#!/bin/bash') or content.startswith('#!/bin/sh') or content.startswith('#!/usr/bin/env'):
+            return 'shell'
+        
+        # SQL特征
+        if any(keyword in content_lower for keyword in ['select ', 'from ', 'where ', 'insert into', 'update ', 'delete from']):
+            return 'sql'
+        
+        # Markdown特征
+        if any(marker in content for marker in ['# ', '## ', '### ', '```', '**', '*', '[', '](']):
+            return 'markdown'
+        
+        # 默认返回text
+        return 'text'
     
     def _is_code_file(self, filename: str) -> bool:
         """判断是否为代码文件"""
         code_extensions = {
-            '.py', '.js', '.ts', '.jsx', '.tsx', '.java', '.cpp', '.c', '.cs',
-            '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala', '.html',
-            '.css', '.scss', '.less', '.sql', '.sh', '.bash'
+            '.py', '.js', '.ts', '.jsx', '.tsx', '.java', '.cpp', '.cc', '.cxx',
+            '.c', '.h', '.hpp', '.cs', '.php', '.rb', '.go', '.rs', '.swift',
+            '.kt', '.scala', '.html', '.htm', '.css', '.scss', '.sass', '.less',
+            '.sql', '.sh', '.bash', '.zsh', '.fish', '.json', '.xml', '.yaml',
+            '.yml', '.toml', '.ini', '.cfg', '.conf', '.md', '.markdown'
         }
         ext = os.path.splitext(filename)[1].lower()
         return ext in code_extensions

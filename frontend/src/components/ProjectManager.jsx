@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Github, Folder, Clock, AlertCircle, GitBranch } from 'lucide-react'
+import { Plus, Github, Folder, Clock, AlertCircle, GitBranch, MessageCircle } from 'lucide-react'
 import axios from 'axios'
+import ProjectChat from './ProjectChat'
 
 const ProjectManager = ({ onProjectSelect }) => {
   const [projects, setProjects] = useState([])
@@ -16,6 +17,8 @@ const ProjectManager = ({ onProjectSelect }) => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [branches, setBranches] = useState([])
   const [loadingBranches, setLoadingBranches] = useState(false)
+  const [chatVisible, setChatVisible] = useState(false)
+  const [selectedProject, setSelectedProject] = useState(null)
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
@@ -147,6 +150,21 @@ const ProjectManager = ({ onProjectSelect }) => {
         alert('删除失败: ' + error.message);
       }
     }
+  }
+
+  const openChat = (project, e) => {
+    // 阻止事件冒泡，避免触发项目选择
+    if (e && e.stopPropagation) {
+      e.stopPropagation();
+    }
+    
+    setSelectedProject(project);
+    setChatVisible(true);
+  }
+
+  const closeChat = () => {
+    setChatVisible(false);
+    setSelectedProject(null);
   }
 
   if (loading) {
@@ -305,7 +323,15 @@ const ProjectManager = ({ onProjectSelect }) => {
                 )}
               </div>
             </CardContent>
-            <div className="flex justify-end px-4 pb-4">
+            <div className="flex justify-between px-4 pb-4">
+              <Button
+                variant="outline"
+                onClick={(e) => openChat(project, e)}
+                className="flex items-center space-x-2"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>聊天</span>
+              </Button>
               <Button
                 variant="destructive"
                 onClick={(e) => handleDelete(project.id, e)}
@@ -317,6 +343,13 @@ const ProjectManager = ({ onProjectSelect }) => {
         ))}
         </div>
       )}
+      
+      {/* 聊天界面 */}
+      <ProjectChat
+        project={selectedProject}
+        visible={chatVisible}
+        onClose={closeChat}
+      />
     </div>
   )
 }

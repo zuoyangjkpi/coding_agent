@@ -43,41 +43,68 @@ class AIService:
         """获取可用的AI模型列表"""
         return [
             {
+                'id': 'claude-3.7-sonnet',
+                'name': 'Claude 3.7 Sonnet',
+                'description': '专业编程模型，代码生成和分析能力强',
+                'type': 'coding',
+                'cost': 'paid',
+                'context_window': 200000,
+                'primary_use': 'coding'
+            },
+            {
                 'id': 'deepseek-r1',
                 'name': 'DeepSeek R1',
-                'description': '免费开源模型，编程能力强',
-                'type': 'coding',
-                'cost': 'free',
-                'context_window': 128000
+                'description': '强大的推理模型，逻辑分析和问题解决',
+                'type': 'reasoning',
+                'cost': 'paid',
+                'context_window': 128000,
+                'primary_use': 'reasoning'
             },
             {
                 'id': 'gemini-2.5-flash',
                 'name': 'Gemini 2.5 Flash',
-                'description': '大上下文窗口，混合推理',
-                'type': 'reasoning',
+                'description': '超大上下文窗口，适合大型项目分析',
+                'type': 'large_context',
                 'cost': 'paid',
-                'context_window': 1000000
+                'context_window': 1000000,
+                'primary_use': 'large_context'
             },
+            # 备用模型
             {
-                'id': 'claude-3.5-sonnet',
-                'name': 'Claude 3.5 Sonnet',
-                'description': '商业模型，编程能力强',
-                'type': 'coding',
-                'cost': 'paid',
-                'context_window': 200000
-            },
-            {
-                'id': 'gpt-4o-mini',
-                'name': 'GPT-4o Mini',
-                'description': 'OpenAI小型模型，成本低',
+                'id': 'gpt-4.1-mini',
+                'name': 'GPT-4.1 Mini',
+                'description': 'OpenAI备用模型',
                 'type': 'general',
                 'cost': 'paid',
-                'context_window': 128000
+                'context_window': 128000,
+                'primary_use': 'backup'
             }
         ]
     
-    def analyze_code(self, code: str, file_type: str, model: str = 'deepseek-r1') -> Dict[str, Any]:
+    def get_optimal_model(self, task_type: str, content_length: int = 0) -> str:
+        """根据任务类型和内容长度选择最优模型"""
+        # 大上下文任务（超过50k字符或明确指定）
+        if content_length > 50000 or task_type in ['large_context', 'project_analysis', 'repository_analysis']:
+            return 'gemini-2.5-flash'
+        
+        # 编程相关任务
+        elif task_type in ['coding', 'code_analysis', 'code_generation', 'code_review', 'code_modification']:
+            return 'claude-3.7-sonnet'
+        
+        # 推理和分析任务
+        elif task_type in ['reasoning', 'logic_analysis', 'problem_solving', 'architecture_analysis']:
+            return 'deepseek-r1'
+        
+        # 默认使用Claude进行编程任务
+        else:
+            return 'claude-3.7-sonnet'
+    
+    def analyze_code(self, code: str, file_type: str, model: str = None) -> Dict[str, Any]:
         """分析代码质量和结构"""
+        # 如果没有指定模型，使用智能选择
+        if model is None:
+            model = self.get_optimal_model('code_analysis', len(code))
+        
         prompt = f"""
 请分析以下{file_type}代码，提供详细的分析报告：
 
@@ -111,8 +138,12 @@ class AIService:
                 'model_used': model
             }
     
-    def generate_code(self, description: str, language: str, model: str = 'deepseek-r1') -> Dict[str, Any]:
+    def generate_code(self, description: str, language: str, model: str = None) -> Dict[str, Any]:
         """根据描述生成代码"""
+        # 如果没有指定模型，使用智能选择
+        if model is None:
+            model = self.get_optimal_model('code_generation', len(description))
+        
         prompt = f"""
 请根据以下描述生成{language}代码：
 
@@ -144,8 +175,12 @@ class AIService:
                 'model_used': model
             }
     
-    def modify_code(self, original_code: str, modification_request: str, file_type: str, model: str = 'deepseek-r1') -> Dict[str, Any]:
+    def modify_code(self, original_code: str, modification_request: str, file_type: str, model: str = None) -> Dict[str, Any]:
         """修改现有代码"""
+        # 如果没有指定模型，使用智能选择
+        if model is None:
+            model = self.get_optimal_model('code_modification', len(original_code))
+        
         prompt = f"""
 请根据以下要求修改{file_type}代码：
 
@@ -174,8 +209,12 @@ class AIService:
                 'model_used': model
             }
     
-    def review_code(self, code: str, file_type: str, model: str = 'deepseek-r1') -> Dict[str, Any]:
+    def review_code(self, code: str, file_type: str, model: str = None) -> Dict[str, Any]:
         """代码审查"""
+        # 如果没有指定模型，使用智能选择
+        if model is None:
+            model = self.get_optimal_model('code_review', len(code))
+        
         prompt = f"""
 请对以下{file_type}代码进行详细的代码审查：
 
@@ -211,16 +250,17 @@ class AIService:
     
     def _call_model(self, model: str, prompt: str) -> str:
         """调用指定的AI模型"""
-        if model == 'deepseek-r1':
-            return self._call_deepseek(prompt)
+        if model.startswith('gpt'):
+            return self._call_openai(prompt, model)
         elif model.startswith('gemini'):
             return self._call_gemini(prompt, model)
         elif model.startswith('claude'):
             return self._call_claude(prompt, model)
-        elif model.startswith('gpt'):
-            return self._call_openai(prompt, model)
+        elif model == 'deepseek-r1':
+            return self._call_deepseek(prompt)
         else:
-            raise ValueError(f"Unsupported model: {model}")
+            # 默认使用Claude进行编程任务
+            return self._call_claude(prompt, 'claude-3.7-sonnet')
     
     def _call_deepseek(self, prompt: str) -> str:
         """调用DeepSeek模型"""
@@ -239,7 +279,7 @@ class AIService:
             else:
                 # 如果没有DeepSeek API密钥，使用OpenAI作为备选
                 response = self.openai_client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model="gpt-4.1-mini",
                     messages=[
                         {"role": "system", "content": "You are a helpful coding assistant with expertise in code analysis and generation."},
                         {"role": "user", "content": prompt}
@@ -279,7 +319,12 @@ class AIService:
                 return f"Claude API未配置，请设置ANTHROPIC_API_KEY环境变量"
             
             # 根据模型名称选择对应的Claude模型
-            claude_model = "claude-3-5-sonnet-20241022" if "3.5" in model else "claude-3-haiku-20240307"
+            if "3.7" in model:
+                claude_model = "claude-3-5-sonnet-20241022"  # 使用最新的Claude 3.5 Sonnet作为3.7的替代
+            elif "3.5" in model:
+                claude_model = "claude-3-5-sonnet-20241022"
+            else:
+                claude_model = "claude-3-haiku-20240307"
             
             response = self.anthropic_client.messages.create(
                 model=claude_model,
@@ -310,9 +355,15 @@ class AIService:
         except Exception as e:
             raise Exception(f"OpenAI API error: {str(e)}")
 
-    def analyze_project(self, project_overview: dict, important_files: list, analysis_type: str = 'overview', model: str = 'deepseek-r1') -> dict:
+    def analyze_project(self, project_overview: dict, important_files: list, analysis_type: str = 'overview', model: str = None) -> dict:
         """分析整个项目"""
         try:
+            # 如果没有指定模型，使用智能选择（项目分析通常需要大上下文）
+            if model is None:
+                # 计算总内容长度
+                total_content_length = sum(len(file.get('content', '')) for file in important_files)
+                model = self.get_optimal_model('project_analysis', total_content_length)
+            
             # 构建分析提示
             if analysis_type == 'overview':
                 prompt = f"""
