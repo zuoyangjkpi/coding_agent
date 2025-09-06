@@ -67,7 +67,22 @@ echo "Personal Access Token获取方法: GitHub Settings > Developer settings > 
 echo ""
 
 # 尝试推送
-if git push origin main; then
+# 如果设置了GITHUB_TOKEN环境变量，使用token推送
+if [ -n "$GITHUB_TOKEN" ]; then
+    REPO_URL=$(git remote get-url origin)
+    REPO_PATH=${REPO_URL#https://github.com/}
+    if git push https://$GITHUB_TOKEN@github.com/$REPO_PATH main; then
+        PUSH_SUCCESS=true
+    else
+        PUSH_SUCCESS=false
+    fi
+elif git push origin main; then
+    PUSH_SUCCESS=true
+else
+    PUSH_SUCCESS=false
+fi
+
+if [ "$PUSH_SUCCESS" = true ]; then
     echo ""
     echo "🎉 成功推送到远程仓库!"
     echo "您可以在以下地址查看更新: $REMOTE_URL"

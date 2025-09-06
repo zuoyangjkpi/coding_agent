@@ -85,3 +85,31 @@ xhtml2pdf==0.2.17
 zope-event==5.1.1
 zope-interface==7.2
 zopfli==0.2.3.post1
+
+# Flask相关依赖
+flask-socketio==5.4.1
+flask-cors==5.0.0
+flask-sqlalchemy==3.1.1
+python-socketio==5.12.0
+python-engineio==4.10.1
+
+# AI和HTTP客户端
+openai==1.58.1
+anthropic==0.40.0
+google-generativeai==0.8.3
+httpx==0.28.1
+
+# Git操作
+gitpython==3.1.43
+
+# 代码分析
+tree-sitter==0.23.2
+tree-sitter-python==0.23.4
+tree-sitter-javascript==0.23.1
+tree-sitter-typescript==0.23.2
+tree-sitter-java==0.23.4
+tree-sitter-cpp==0.23.4
+tree-sitter-c==0.23.4
+tree-sitter-go==0.23.4
+tree-sitter-rust==0.23.4
+

@@ -43,8 +43,8 @@ app.register_blueprint(ai_bp, url_prefix='/api')
 app.register_blueprint(github_bp, url_prefix='/api')
 app.register_blueprint(chat_bp, url_prefix='/api')
 
-# 数据库配置
-database_path = '/home/ubuntu/coding_agent/backend/database/app.db'
+# 数据库配置 - 使用相对路径
+database_path = os.path.join(os.path.dirname(__file__), '..', 'database', 'app.db')
 database_url = os.getenv('DATABASE_URL', f"sqlite:///{database_path}")
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -133,8 +133,8 @@ def handle_analysis_progress(data):
         }, room=f'project_{project_id}')
 
 if __name__ == '__main__':
-    # 确保必要的目录存在
-    os.makedirs('/home/ubuntu/coding_agent/backend/database', exist_ok=True)
+    # 确保必要的目录存在 - 使用相对路径
+    os.makedirs('database', exist_ok=True)
     os.makedirs('projects', exist_ok=True)
     
     # 暂时跳过数据库初始化，先让服务器运行起来
