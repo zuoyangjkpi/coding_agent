@@ -78,16 +78,30 @@ const ProjectManager = ({ onProjectSelect }) => {
     }
     
     try {
-      console.log('尝试删除项目', projectId);  // 调试输出
+      console.log('尝试删除项目', projectId);
+      console.log('删除前项目列表:', projects.map(p => ({ id: p.id, name: p.name })));
+      
       const response = await axios.delete(`/api/projects/${projectId}`);
+      console.log('删除响应:', response.data);
       
       if (response.data.success) {
         // 更新本地状态，移除被删除的项目
-        setProjects((prev) => prev.filter((p) => p.id !== projectId));
-        console.log('删除成功', projectId);  // 调试输出
+        setProjects((prevProjects) => {
+          const newProjects = prevProjects.filter((p) => p.id !== projectId);
+          console.log('删除后项目列表:', newProjects.map(p => ({ id: p.id, name: p.name })));
+          return newProjects;
+        });
         
-        // 可选：显示成功消息
+        console.log('删除成功', projectId);
+        
+        // 显示成功消息
         alert('项目删除成功！');
+        
+        // 强制重新获取项目列表以确保同步
+        setTimeout(() => {
+          fetchProjects();
+        }, 100);
+        
       } else {
         console.error('删除失败:', response.data.error);
         alert('删除失败: ' + response.data.error);
@@ -99,12 +113,15 @@ const ProjectManager = ({ onProjectSelect }) => {
       if (error.response) {
         // 服务器返回了错误响应
         const errorMessage = error.response.data?.error || '服务器错误';
+        console.error('服务器错误响应:', error.response.data);
         alert('删除失败: ' + errorMessage);
       } else if (error.request) {
         // 请求发送了但没有收到响应
+        console.error('网络请求失败:', error.request);
         alert('删除失败: 无法连接到服务器，请检查网络连接');
       } else {
         // 其他错误
+        console.error('其他错误:', error.message);
         alert('删除失败: ' + error.message);
       }
     }

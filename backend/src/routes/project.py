@@ -116,23 +116,44 @@ def update_project(project_id):
 def delete_project(project_id):
     """删除项目"""
     try:
+        print(f"尝试删除项目 ID: {project_id}")  # 调试日志
+        
         project = Project.query.get_or_404(project_id)
+        print(f"找到项目: {project.name} (ID: {project.id})")  # 调试日志
+        
+        # 删除关联的代码文件记录
+        code_files = CodeFile.query.filter_by(project_id=project_id).all()
+        for code_file in code_files:
+            db.session.delete(code_file)
+        print(f"删除了 {len(code_files)} 个代码文件记录")  # 调试日志
+        
+        # 删除关联的分析任务
+        analysis_tasks = AnalysisTask.query.filter_by(project_id=project_id).all()
+        for task in analysis_tasks:
+            db.session.delete(task)
+        print(f"删除了 {len(analysis_tasks)} 个分析任务")  # 调试日志
         
         # 删除本地文件夹（如果存在）
         if project.local_path and os.path.exists(project.local_path):
             import shutil
             shutil.rmtree(project.local_path)
+            print(f"删除了本地文件夹: {project.local_path}")  # 调试日志
         
+        # 删除项目记录
         db.session.delete(project)
         db.session.commit()
         
+        print(f"项目 {project_id} 删除成功")  # 调试日志
+        
         return jsonify({
             'success': True,
-            'message': 'Project deleted successfully'
+            'message': 'Project deleted successfully',
+            'deleted_project_id': project_id
         })
         
     except Exception as e:
         db.session.rollback()
+        print(f"删除项目失败: {str(e)}")  # 调试日志
         return jsonify({
             'success': False,
             'error': str(e)
