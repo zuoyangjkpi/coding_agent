@@ -85,22 +85,15 @@ const ProjectManager = ({ onProjectSelect }) => {
       console.log('删除响应:', response.data);
       
       if (response.data.success) {
-        // 更新本地状态，移除被删除的项目
-        setProjects((prevProjects) => {
-          const newProjects = prevProjects.filter((p) => p.id !== projectId);
-          console.log('删除后项目列表:', newProjects.map(p => ({ id: p.id, name: p.name })));
-          return newProjects;
-        });
-        
         console.log('删除成功', projectId);
+        
+        // 立即更新本地状态，移除被删除的项目
+        const newProjects = projects.filter((p) => p.id !== projectId);
+        console.log('删除后项目列表:', newProjects.map(p => ({ id: p.id, name: p.name })));
+        setProjects(newProjects);
         
         // 显示成功消息
         alert('项目删除成功！');
-        
-        // 强制重新获取项目列表以确保同步
-        setTimeout(() => {
-          fetchProjects();
-        }, 100);
         
       } else {
         console.error('删除失败:', response.data.error);

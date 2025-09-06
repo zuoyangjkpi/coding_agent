@@ -29,30 +29,32 @@ function App() {
   const [connectionStatus, setConnectionStatus] = useState('disconnected')
 
   useEffect(() => {
-    // 在开发环境中，使用Vite代理，所以直接使用相对路径
-    // 在生产环境中，使用环境变量指定的后端URL
+    // 在开发环境中，直接连接到后端，不使用代理
     const isDevelopment = import.meta.env.DEV;
-    const backendURL = isDevelopment ? window.location.origin : (import.meta.env.VITE_BACKEND_URL || window.location.origin);
+    const backendURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
     
     console.log('Environment:', isDevelopment ? 'development' : 'production');
     console.log('Backend URL:', backendURL);
 
     // 设置axios默认配置
     if (isDevelopment) {
-      // 开发环境使用代理，所以baseURL设为空或当前域名
+      // 开发环境使用代理，所以baseURL设为空
       axios.defaults.baseURL = '';
     } else {
       // 生产环境直接指向后端
       axios.defaults.baseURL = backendURL;
     }
 
-    // 初始化Socket.IO连接
+    // 初始化Socket.IO连接 - 直接连接到后端，不通过代理
     const socketInstance = io(backendURL, {
       path: '/socket.io',
-      transports: ['websocket', 'polling'],
-      timeout: 20000,
+      transports: ['polling', 'websocket'], // 优先使用polling避免WebSocket代理问题
+      timeout: 10000,
       forceNew: true,
-      autoConnect: true
+      autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
     });
     setSocket(socketInstance);
 
