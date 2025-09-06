@@ -22,7 +22,7 @@ function App() {
   useEffect(() => {
     // 在开发环境中，直接连接到后端，不使用代理
     const isDevelopment = import.meta.env.DEV;
-    const backendURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    const backendURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
     
     console.log('Environment:', isDevelopment ? 'development' : 'production');
     console.log('Backend URL:', backendURL);
