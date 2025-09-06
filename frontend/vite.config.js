@@ -7,7 +7,7 @@ import path from 'path';
 export default defineConfig(({ mode }) => {
   // 读取环境变量
   const env = loadEnv(mode, process.cwd(), '');
-  const backendUrl = env.VITE_BACKEND_URL || 'http://localhost:5000';
+  const backendUrl = env.VITE_BACKEND_URL || 'http://localhost:5001';
 
   return {
     plugins: [react(), tailwindcss()],
