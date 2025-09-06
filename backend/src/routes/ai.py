@@ -86,37 +86,6 @@ def analyze_code():
             'success': False,
             'error': str(e)
         }), 500
-            task = AnalysisTask(
-                task_type='analyze',
-                description=f'Code analysis using {model}',
-                input_data=json.dumps({
-                    'code': code[:1000] + '...' if len(code) > 1000 else code,
-                    'file_type': file_type
-                }),
-                output_data=json.dumps({
-                    'ai_analysis': ai_result,
-                    'syntax_analysis': ts_result
-                }),
-                ai_model=model,
-                status='completed',
-                completed_at=datetime.utcnow(),
-                project_id=project_id
-            )
-            db.session.add(task)
-            db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'ai_analysis': ai_result,
-            'syntax_analysis': ts_result,
-            'model_used': model
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
 
 @ai_bp.route('/ai/generate-code', methods=['POST'])
 def generate_code():
