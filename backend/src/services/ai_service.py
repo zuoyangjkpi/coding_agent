@@ -313,3 +313,129 @@ class AIService:
 # 全局AI服务实例
 ai_service = AIService()
 
+
+    def analyze_project(self, project_overview: dict, important_files: list, analysis_type: str = 'overview', model: str = 'deepseek-r1') -> dict:
+        """分析整个项目"""
+        try:
+            # 构建分析提示
+            if analysis_type == 'overview':
+                prompt = f"""
+请分析以下项目的整体结构和代码质量：
+
+项目信息：
+- 名称：{project_overview.get('name', 'Unknown')}
+- 描述：{project_overview.get('description', 'No description')}
+- 总文件数：{project_overview.get('total_files', 0)}
+- 语言分布：{project_overview.get('languages', {})}
+
+主要文件内容：
+"""
+                for file in important_files:
+                    prompt += f"\n文件：{file['path']} ({file['type']})\n```\n{file['content']}\n```\n"
+                
+                prompt += """
+请提供以下分析：
+1. 项目架构概览
+2. 代码质量评估
+3. 技术栈分析
+4. 潜在问题和改进建议
+5. 项目复杂度评估
+
+请用中文回答，格式清晰。
+"""
+            
+            elif analysis_type == 'security':
+                prompt = f"""
+请对以下项目进行安全性分析：
+
+项目信息：
+- 名称：{project_overview.get('name', 'Unknown')}
+- 语言分布：{project_overview.get('languages', {})}
+
+主要文件内容：
+"""
+                for file in important_files:
+                    prompt += f"\n文件：{file['path']} ({file['type']})\n```\n{file['content']}\n```\n"
+                
+                prompt += """
+请重点分析：
+1. 安全漏洞检测
+2. 敏感信息泄露风险
+3. 输入验证问题
+4. 权限控制缺陷
+5. 安全最佳实践建议
+
+请用中文回答，重点标注高风险问题。
+"""
+            
+            elif analysis_type == 'performance':
+                prompt = f"""
+请对以下项目进行性能分析：
+
+项目信息：
+- 名称：{project_overview.get('name', 'Unknown')}
+- 语言分布：{project_overview.get('languages', {})}
+
+主要文件内容：
+"""
+                for file in important_files:
+                    prompt += f"\n文件：{file['path']} ({file['type']})\n```\n{file['content']}\n```\n"
+                
+                prompt += """
+请重点分析：
+1. 性能瓶颈识别
+2. 算法复杂度分析
+3. 内存使用优化
+4. 数据库查询优化
+5. 性能改进建议
+
+请用中文回答，提供具体的优化方案。
+"""
+            
+            elif analysis_type == 'architecture':
+                prompt = f"""
+请对以下项目进行架构分析：
+
+项目信息：
+- 名称：{project_overview.get('name', 'Unknown')}
+- 文件结构：{[f['path'] for f in project_overview.get('file_structure', [])]}
+- 语言分布：{project_overview.get('languages', {})}
+
+主要文件内容：
+"""
+                for file in important_files:
+                    prompt += f"\n文件：{file['path']} ({file['type']})\n```\n{file['content']}\n```\n"
+                
+                prompt += """
+请重点分析：
+1. 项目架构模式
+2. 模块化程度
+3. 依赖关系分析
+4. 设计模式使用
+5. 架构改进建议
+
+请用中文回答，提供架构图建议。
+"""
+            
+            else:
+                prompt = f"请分析项目：{project_overview.get('name', 'Unknown')}"
+            
+            # 调用AI模型
+            response = self._call_model(model, prompt)
+            
+            return {
+                'success': True,
+                'analysis': response,
+                'analysis_type': analysis_type,
+                'model_used': model,
+                'files_analyzed': len(important_files)
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'analysis_type': analysis_type,
+                'model_used': model
+            }
+

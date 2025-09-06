@@ -33,9 +33,47 @@ const CodeEditor = ({ project, selectedFile, onFileChange }) => {
   const [selectedModel, setSelectedModel] = useState('deepseek-r1')
   const editorRef = useRef(null)
 
+  const detectLanguage = (filePath) => {
+    const extension = filePath.split('.').pop().toLowerCase()
+    const languageMap = {
+      'js': 'javascript',
+      'jsx': 'javascript',
+      'ts': 'typescript',
+      'tsx': 'typescript',
+      'py': 'python',
+      'java': 'java',
+      'cpp': 'cpp',
+      'c': 'c',
+      'cs': 'csharp',
+      'php': 'php',
+      'rb': 'ruby',
+      'go': 'go',
+      'rs': 'rust',
+      'html': 'html',
+      'css': 'css',
+      'scss': 'scss',
+      'sass': 'sass',
+      'json': 'json',
+      'xml': 'xml',
+      'yaml': 'yaml',
+      'yml': 'yaml',
+      'md': 'markdown',
+      'sql': 'sql',
+      'sh': 'shell',
+      'bash': 'shell',
+      'dockerfile': 'dockerfile',
+      'vue': 'vue',
+      'svelte': 'svelte'
+    }
+    return languageMap[extension] || 'plaintext'
+  }
+
   useEffect(() => {
     if (selectedFile) {
       loadFileContent()
+      // 自动检测语言
+      const detectedLanguage = detectLanguage(selectedFile.path)
+      setLanguage(detectedLanguage)
     }
   }, [selectedFile])
 

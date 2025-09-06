@@ -4,9 +4,85 @@ from src.models.user import db
 from src.models.project import Project, CodeFile
 import os
 import json
+import requests
+import re
 from datetime import datetime
 
 github_bp = Blueprint('github', __name__)
+
+def parse_github_url(url):
+    """解析GitHub URL，提取用户名和仓库名"""
+    pattern = r'github\.com[/:]([^/]+)/([^/]+?)(?:\.git)?/?$'
+    match = re.search(pattern, url)
+    if match:
+        return match.group(1), match.group(2)
+    return None, None
+
+@github_bp.route('/github/branches', methods=['GET'])
+def get_branches():
+    """获取GitHub仓库的分支列表"""
+    try:
+        github_url = request.args.get('url')
+        if not github_url:
+            return jsonify({
+                'success': False,
+                'error': 'GitHub URL is required'
+            }), 400
+        
+        # 解析GitHub URL
+        owner, repo = parse_github_url(github_url)
+        if not owner or not repo:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid GitHub URL format'
+            }), 400
+        
+        # 构建GitHub API URL
+        api_url = f'https://api.github.com/repos/{owner}/{repo}/branches'
+        
+        # 设置请求头
+        headers = {
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'Coding-Agent/1.0'
+        }
+        
+        # 如果有GitHub token，添加到请求头
+        github_token = os.getenv('GITHUB_TOKEN')
+        if github_token:
+            headers['Authorization'] = f'token {github_token}'
+        
+        # 发送请求
+        response = requests.get(api_url, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            branches_data = response.json()
+            branches = [branch['name'] for branch in branches_data]
+            
+            return jsonify({
+                'success': True,
+                'branches': branches
+            })
+        elif response.status_code == 404:
+            return jsonify({
+                'success': False,
+                'error': 'Repository not found or private'
+            }), 404
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'GitHub API error: {response.status_code}'
+            }), response.status_code
+            
+    except requests.RequestException as e:
+        return jsonify({
+            'success': False,
+            'error': f'Network error: {str(e)}'
+        }), 500
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @github_bp.route('/github/repo-info', methods=['POST'])
 def get_repo_info():

@@ -6,17 +6,21 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Github, Folder, Clock, AlertCircle } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Plus, Github, Folder, Clock, AlertCircle, GitBranch } from 'lucide-react'
 import axios from 'axios'
 
 const ProjectManager = ({ onProjectSelect }) => {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [branches, setBranches] = useState([])
+  const [loadingBranches, setLoadingBranches] = useState(false)
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
-    github_url: ''
+    github_url: '',
+    branch: 'main'
   })
 
   useEffect(() => {
@@ -36,12 +40,37 @@ const ProjectManager = ({ onProjectSelect }) => {
     }
   }
 
+  const fetchBranches = async (githubUrl) => {
+    if (!githubUrl || !githubUrl.includes('github.com')) {
+      setBranches([])
+      return
+    }
+    
+    setLoadingBranches(true)
+    try {
+      const response = await axios.get(`/api/github/branches?url=${encodeURIComponent(githubUrl)}`)
+      if (response.data.success) {
+        setBranches(response.data.branches)
+        // 如果当前选择的分支不在列表中，设置为默认分支
+        if (!response.data.branches.includes(newProject.branch)) {
+          setNewProject(prev => ({ ...prev, branch: response.data.branches[0] || 'main' }))
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch branches:', error)
+      setBranches(['main', 'master', 'develop']) // 默认分支
+    } finally {
+      setLoadingBranches(false)
+    }
+  }
+
   const createProject = async () => {
     try {
       const response = await axios.post('/api/projects', newProject)
       if (response.data.success) {
         setProjects([...projects, response.data.project])
-        setNewProject({ name: '', description: '', github_url: '' })
+        setNewProject({ name: '', description: '', github_url: '', branch: 'main' })
+        setBranches([])
         setIsCreateDialogOpen(false)
       }
     } catch (error) {
@@ -174,10 +203,45 @@ const ProjectManager = ({ onProjectSelect }) => {
                 <Input
                   id="github_url"
                   value={newProject.github_url}
-                  onChange={(e) => setNewProject({ ...newProject, github_url: e.target.value })}
+                  onChange={(e) => {
+                    setNewProject({ ...newProject, github_url: e.target.value })
+                    // 当URL改变时，获取分支列表
+                    if (e.target.value) {
+                      fetchBranches(e.target.value)
+                    } else {
+                      setBranches([])
+                    }
+                  }}
                   placeholder="https://github.com/user/repo（可选）"
                 />
               </div>
+              {newProject.github_url && (
+                <div className="grid gap-2">
+                  <Label htmlFor="branch">选择分支</Label>
+                  <Select 
+                    value={newProject.branch} 
+                    onValueChange={(value) => setNewProject({ ...newProject, branch: value })}
+                    disabled={loadingBranches}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={loadingBranches ? "加载分支中..." : "选择分支"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {branches.map((branch) => (
+                        <SelectItem key={branch} value={branch}>
+                          <div className="flex items-center">
+                            <GitBranch className="w-4 h-4 mr-2" />
+                            {branch}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {loadingBranches && (
+                    <p className="text-sm text-gray-500">正在获取分支列表...</p>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex justify-end space-x-2">
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>

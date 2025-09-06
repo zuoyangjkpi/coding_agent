@@ -1,25 +1,16 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Code, 
-  Folder, 
-  Zap, 
-  Github, 
-  Settings, 
-  Home,
-  Brain,
-  FileText
-} from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Wifi, WifiOff, Folder, Code, BarChart3 } from 'lucide-react'
 import ProjectManager from './components/ProjectManager'
 import FileBrowser from './components/FileBrowser'
 import CodeEditor from './components/CodeEditor'
-import axios from 'axios'
+import ProjectAnalysis from './components/ProjectAnalysis'
 import io from 'socket.io-client'
+import axios from 'axios'
 import './App.css'
-import.meta.env.VITE_BACKEND_URL // 可以获取到.env 中定义的地址
 
 function App() {
   const [currentView, setCurrentView] = useState('projects')
@@ -168,7 +159,7 @@ function App() {
 
     return (
       <div className="flex h-full">
-        {/* 侧边栏 - 文件浏览器 */}
+        {/* 侧边栏 - 文件浏览器和项目分析 */}
         <div className="w-80 border-r border-gray-200 bg-gray-50">
           <div className="p-4 border-b border-gray-200 bg-white">
             <h2 className="font-semibold text-gray-900">{selectedProject.name}</h2>
@@ -182,13 +173,28 @@ function App() {
               </div>
             )}
           </div>
-          <div className="p-4">
-            <FileBrowser
-              project={selectedProject}
-              onFileSelect={handleFileSelect}
-              selectedFile={selectedFile}
-            />
-          </div>
+          <Tabs defaultValue="files" className="h-full">
+            <TabsList className="grid w-full grid-cols-2 mx-4 mt-2">
+              <TabsTrigger value="files" className="text-xs">
+                <Folder className="w-3 h-3 mr-1" />
+                文件
+              </TabsTrigger>
+              <TabsTrigger value="analysis" className="text-xs">
+                <BarChart3 className="w-3 h-3 mr-1" />
+                分析
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="files" className="p-4 h-full">
+              <FileBrowser
+                project={selectedProject}
+                onFileSelect={handleFileSelect}
+                selectedFile={selectedFile}
+              />
+            </TabsContent>
+            <TabsContent value="analysis" className="p-4 h-full overflow-y-auto">
+              <ProjectAnalysis project={selectedProject} />
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* 主内容区 */}
