@@ -16,17 +16,33 @@ cd coding_agent
 ### 2. 后端设置
 
 #### 安装Python依赖
+
+**方案1: 使用核心依赖（推荐）**
+```bash
+cd backend
+pip3 install -r requirements-core.txt
+```
+
+**方案2: 使用完整依赖**
 ```bash
 cd backend
 pip3 install -r requirements.txt
 ```
 
-如果遇到依赖安装问题，可以使用虚拟环境：
+**方案3: 如果遇到版本冲突，使用虚拟环境**
 ```bash
+cd backend
 python3 -m venv venv
 source venv/bin/activate  # Linux/Mac
 # 或 venv\Scripts\activate  # Windows
-pip install -r requirements.txt
+pip install -r requirements-core.txt
+```
+
+**方案4: 手动安装核心依赖**
+```bash
+pip3 install flask flask-socketio flask-cors flask-sqlalchemy gevent
+pip3 install openai anthropic google-generativeai
+pip3 install gitpython requests pyyaml
 ```
 
 #### 配置环境变量

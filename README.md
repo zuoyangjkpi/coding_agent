@@ -47,11 +47,20 @@
 ## 📦 安装部署
 
 ### 环境要求
-- Python 3.11+
-- Node.js 20+
+- Python 3.8+ (推荐3.10+)
+- Node.js 16+ (推荐18+)
 - Git
 
-### 后端部署
+### 🚀 快速开始
+
+#### 方法1: 一键启动（推荐）
+```bash
+git clone https://github.com/zuoyangjkpi/coding_agent.git
+cd coding_agent
+./quick_start.sh
+```
+
+#### 方法2: 手动安装
 
 1. 克隆项目
 ```bash
@@ -62,28 +71,24 @@ cd coding_agent
 2. 设置后端环境
 ```bash
 cd backend
-python -m venv venv
+# 使用核心依赖（推荐）
+pip3 install -r requirements-core.txt
+# 或使用虚拟环境
+python3 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-core.txt
 ```
 
 3. 配置环境变量
 ```bash
-# OpenAI API (用于GPT模型)
-export OPENAI_API_KEY="your_openai_api_key"
-# Anthropic API (用于Claude模型)
-export ANTHROPIC_API_KEY="your_anthropic_api_key"
-# Google AI API (用于Gemini模型)
-export GOOGLE_API_KEY="your_google_api_key"
-# DeepSeek API (用于DeepSeek R1模型)
-export DEEPSEEK_API_KEY="your_deepseek_api_key"
-# GitHub Token (用于仓库操作)
-export GITHUB_TOKEN="your_github_token"
+cd backend
+cp .env.example .env
+# 编辑 .env 文件，添加您的API密钥
 ```
 
 4. 启动后端服务
 ```bash
-python src/main.py
+python3 src/main.py
 ```
 
 ### 前端部署
@@ -91,12 +96,31 @@ python src/main.py
 1. 安装依赖
 ```bash
 cd frontend
-pnpm install
+npm install  # 或 pnpm install
 ```
 
 2. 启动开发服务器
 ```bash
-pnpm run dev
+npm run dev  # 或 pnpm run dev
+```
+
+### 环境变量配置
+
+在 `backend/.env` 文件中配置：
+```env
+# AI模型API密钥
+OPENAI_API_KEY=your_openai_api_key_here
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+GOOGLE_API_KEY=your_google_api_key_here
+
+# 数据库配置
+DATABASE_URL=sqlite:///database/app.db
+
+# CORS配置
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+
+# 安全密钥
+SECRET_KEY=your_secret_key_here
 ```
 
 3. 构建生产版本
