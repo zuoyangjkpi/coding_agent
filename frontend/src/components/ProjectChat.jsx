@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Button, Input, Card, Avatar, Spin, Select, message } from 'antd';
-import { SendOutlined, RobotOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons';
-
-const { TextArea } = Input;
-const { Option } = Select;
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Send, Bot, User, Settings, X, Loader2 } from 'lucide-react';
 
 const ProjectChat = ({ project, visible, onClose }) => {
   const [messages, setMessages] = useState([]);
@@ -95,11 +97,10 @@ const ProjectChat = ({ project, visible, onClose }) => {
         };
         setMessages(prev => [...prev, assistantMessage]);
       } else {
-        message.error(`聊天失败: ${data.error}`);
+        console.error(`聊天失败: ${data.error}`);
       }
     } catch (error) {
       console.error('发送消息失败:', error);
-      message.error('发送消息失败，请检查网络连接');
     } finally {
       setLoading(false);
     }
@@ -115,8 +116,8 @@ const ProjectChat = ({ project, visible, onClose }) => {
   const formatMessage = (content) => {
     // 简单的markdown格式化
     return content
-      .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre class="bg-gray-100 p-2 rounded"><code>$2</code></pre>')
+      .replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 rounded">$1</code>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/\n/g, '<br>');
@@ -130,30 +131,31 @@ const ProjectChat = ({ project, visible, onClose }) => {
         {/* 头部 */}
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center space-x-3">
-            <RobotOutlined className="text-2xl text-blue-500" />
+            <Bot className="text-2xl text-blue-500" />
             <div>
               <h3 className="text-lg font-semibold">项目助手</h3>
               <p className="text-sm text-gray-500">{project?.name}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Select
-              value={selectedModel}
-              onChange={setSelectedModel}
-              style={{ width: 200 }}
-              size="small"
-              placeholder="选择AI模型"
-            >
-              {availableModels.map(model => (
-                <Option key={model.id} value={model.id}>
-                  <div className="flex items-center justify-between">
-                    <span>{model.name}</span>
-                    <span className="text-xs text-gray-400">{model.type}</span>
-                  </div>
-                </Option>
-              ))}
+            <Select value={selectedModel} onValueChange={setSelectedModel}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="选择AI模型" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableModels.map(model => (
+                  <SelectItem key={model.id} value={model.id}>
+                    <div className="flex items-center justify-between w-full">
+                      <span>{model.name}</span>
+                      <span className="text-xs text-gray-400 ml-2">{model.type}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
-            <Button onClick={onClose}>关闭</Button>
+            <Button variant="outline" onClick={onClose}>
+              <X className="w-4 h-4" />
+            </Button>
           </div>
         </div>
 
@@ -165,24 +167,24 @@ const ProjectChat = ({ project, visible, onClose }) => {
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div className={`flex items-start space-x-2 max-w-3/4 ${msg.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                <Avatar
-                  icon={msg.role === 'user' ? <UserOutlined /> : <RobotOutlined />}
-                  className={msg.role === 'user' ? 'bg-blue-500' : 'bg-green-500'}
-                />
-                <Card
-                  className={`${msg.role === 'user' ? 'bg-blue-50' : 'bg-gray-50'}`}
-                  bodyStyle={{ padding: '12px' }}
-                >
-                  <div
-                    className="text-sm"
-                    dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }}
-                  />
-                  <div className="flex items-center justify-between mt-2 text-xs text-gray-400">
-                    <span>{new Date(msg.timestamp).toLocaleTimeString()}</span>
-                    {msg.model && msg.model !== 'system' && (
-                      <span className="bg-gray-200 px-2 py-1 rounded">{msg.model}</span>
-                    )}
-                  </div>
+                <Avatar className={msg.role === 'user' ? 'bg-blue-500' : 'bg-green-500'}>
+                  <AvatarFallback>
+                    {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                  </AvatarFallback>
+                </Avatar>
+                <Card className={`${msg.role === 'user' ? 'bg-blue-50' : 'bg-gray-50'}`}>
+                  <CardContent className="p-3">
+                    <div
+                      className="text-sm"
+                      dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }}
+                    />
+                    <div className="flex items-center justify-between mt-2 text-xs text-gray-400">
+                      <span>{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                      {msg.model && msg.model !== 'system' && (
+                        <span className="bg-gray-200 px-2 py-1 rounded">{msg.model}</span>
+                      )}
+                    </div>
+                  </CardContent>
                 </Card>
               </div>
             </div>
@@ -190,10 +192,18 @@ const ProjectChat = ({ project, visible, onClose }) => {
           {loading && (
             <div className="flex justify-start">
               <div className="flex items-start space-x-2">
-                <Avatar icon={<RobotOutlined />} className="bg-green-500" />
-                <Card className="bg-gray-50" bodyStyle={{ padding: '12px' }}>
-                  <Spin size="small" />
-                  <span className="ml-2 text-sm text-gray-500">正在思考...</span>
+                <Avatar className="bg-green-500">
+                  <AvatarFallback>
+                    <Bot className="w-4 h-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <Card className="bg-gray-50">
+                  <CardContent className="p-3">
+                    <div className="flex items-center">
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      <span className="text-sm text-gray-500">正在思考...</span>
+                    </div>
+                  </CardContent>
                 </Card>
               </div>
             </div>
@@ -204,22 +214,20 @@ const ProjectChat = ({ project, visible, onClose }) => {
         {/* 输入区域 */}
         <div className="border-t p-4">
           <div className="flex space-x-2">
-            <TextArea
+            <Textarea
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="输入你的问题... (Shift+Enter 换行，Enter 发送)"
-              autoSize={{ minRows: 1, maxRows: 4 }}
+              className="min-h-[40px] max-h-32"
               disabled={loading}
             />
             <Button
-              type="primary"
-              icon={<SendOutlined />}
               onClick={sendMessage}
-              loading={loading}
-              disabled={!inputMessage.trim()}
+              disabled={!inputMessage.trim() || loading}
+              className="px-4"
             >
-              发送
+              <Send className="w-4 h-4" />
             </Button>
           </div>
           <div className="mt-2 text-xs text-gray-500">
